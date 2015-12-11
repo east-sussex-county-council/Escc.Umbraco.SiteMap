@@ -71,8 +71,8 @@ namespace Escc.Umbraco.SiteMap.Controllers
                 root.Add(urlElement);
             }
 
-            var document = new XDocument(root);
-            return document.ToString();
+            var document = new XDocument(root) {Declaration = new XDeclaration("1.0", "UTF-8", "yes")};
+            return string.Concat(document.Declaration.ToString(), Environment.NewLine, document.ToString());
         }
     }
 }
