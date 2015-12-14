@@ -6,5 +6,6 @@ namespace Escc.Umbraco.SiteMap.Services.Interfaces
     public interface IMediaLibraryService
     {
         IEnumerable<UmbracoSitemapNode> GetPdfFileNodes();
+        IEnumerable<UmbracoSitemapNode> GetPdfFileMediaNodes();
     }
 }

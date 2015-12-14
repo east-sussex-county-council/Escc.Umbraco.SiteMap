@@ -26,27 +26,6 @@ namespace Escc.Umbraco.SiteMap
 
         public void OnApplicationStarted(UmbracoApplicationBase umbracoApplication, ApplicationContext applicationContext)
         {
-            // Sitemap controller
-            //RouteTable.Routes.MapRoute(
-            //    "",
-            //    "Sitemap",
-            //    new
-            //    {
-            //        controller = "Sitemap",
-            //        action = "Index",
-            //        id = "0"
-            //    });
-
-            //RouteTable.Routes.MapRoute(
-            //    "",
-            //    "Sitemap/Index",
-            //    new
-            //    {
-            //        controller = "Sitemap",
-            //        action = "Index",
-            //        id = "0"
-            //    });
-
             RouteTable.Routes.MapRoute(
                 "",
                 "Sitemap/{action}/{id}",

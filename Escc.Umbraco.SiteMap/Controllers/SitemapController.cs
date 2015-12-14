@@ -35,7 +35,8 @@ namespace Escc.Umbraco.SiteMap.Controllers
         {
             try
             {
-                var pdfNodes = _mediaLibraryService.GetPdfFileNodes();
+                //var pdfNodes = _mediaLibraryService.GetPdfFileNodes();
+                var pdfNodes = _mediaLibraryService.GetPdfFileMediaNodes();
                 var xml = GetSitemapDocument(pdfNodes);
                 return Content(xml, "text/xml", Encoding.UTF8);
             }
