@@ -89,6 +89,8 @@ namespace Escc.Umbraco.SiteMap.Services
             {
                 var id = pdf.Id;
                 var mediaFile = ApplicationContext.Current.Services.MediaService.GetById(id);
+                if (mediaFile == null) continue;
+
                 var url = HttpUtility.UrlPathEncode(string.Format("{0}{1}", _cdnDomain, mediaFile.GetValue("umbracoFile")));
 
                 nodes.Add(
