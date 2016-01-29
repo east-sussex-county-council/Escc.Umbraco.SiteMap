@@ -1,13 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Configuration;
-using System.Globalization;
 using System.Linq;
 using System.Web;
 using Escc.Umbraco.SiteMap.Models;
 using Escc.Umbraco.SiteMap.Services.Interfaces;
-using Examine;
-using Umbraco.Core;
 using Umbraco.Core.Models;
 using Umbraco.Web;
 
@@ -16,50 +13,11 @@ namespace Escc.Umbraco.SiteMap.Services
     public class MediaLibraryService : IMediaLibraryService
     {
         private readonly string _cdnDomain;
+        private const string ContentTypeFolder = "folder";
 
         public MediaLibraryService()
         {
             _cdnDomain = GetCdnDomain();
-        }
-
-        /// <summary>
-        /// Search the Media library for PDF files via Examine index
-        /// </summary>
-        /// <returns>
-        /// List of PDF nodes
-        /// </returns>
-        public IEnumerable<UmbracoSitemapNode> GetPdfFileNodes()
-        {
-            var nodes = new List<UmbracoSitemapNode>();
-
-            // Search media Library for PDF files.
-            var examineIndex = ExamineManager.Instance.SearchProviderCollection["InternalSearcher"];
-            var criteria = examineIndex.CreateSearchCriteria("media");
-            var filter = criteria.Field("umbracoExtension", "pdf");
-            var results = examineIndex.Search(filter.Compile());
-
-            foreach (var result in results)
-            {
-                var id = result.Id;
-                var mediaFile = ApplicationContext.Current.Services.MediaService.GetById(id);
-                var url = HttpUtility.UrlPathEncode(string.Format("{0}{1}", _cdnDomain, mediaFile.GetValue("umbracoFile")));
-
-                DateTime updateDate;
-
-                //if (updateDate.Length > 8) updateDate = adt.Substring(0, 8);
-                DateTime.TryParseExact(result.Fields["updateDate"], "yyyyMMddHmmssFFF", CultureInfo.InvariantCulture, DateTimeStyles.None, out updateDate);
-
-                nodes.Add(
-                    new UmbracoSitemapNode
-                    {
-                        Url = url,
-                        Priority = 1,
-                        LastModified = updateDate
-                    }
-                );
-            }
-
-            return nodes;
         }
 
         /// <summary>
@@ -68,8 +26,10 @@ namespace Escc.Umbraco.SiteMap.Services
         /// <returns>
         /// List of PDF nodes
         /// </returns>
-        public IEnumerable<UmbracoSitemapNode> GetPdfFileMediaNodes()
+        public IEnumerable<UmbracoSitemapNode> GetMediaFileNodes()
         {
+            var exclusionList = MediaFilesExclusionList();
+
             var helper = new UmbracoHelper(UmbracoContext.Current);
             var nodes = new List<UmbracoSitemapNode>();
             
@@ -78,27 +38,40 @@ namespace Escc.Umbraco.SiteMap.Services
             if (rootMedia == null) return nodes;
 
 
-            var mediaFiles = rootMedia as IList<IPublishedContent> ?? rootMedia.ToList();
+            var mediaFiles = rootMedia as List<IPublishedContent> ?? rootMedia.ToList();
 
-            var rootFiles = mediaFiles.Select(x => x).Where(x => x.GetPropertyValue<string>("umbracoExtension") == "pdf");
-            var descendantFiles = mediaFiles.SelectMany(x => x.Descendants()).Where(x => x.GetPropertyValue<string>("umbracoExtension") == "pdf");
+            // Get all media nodes, ignoring folders and types listed in the exclusions list
+            var rootFiles =
+                mediaFiles.Select(x => x)
+                    .Where(
+                        x =>
+                            exclusionList.Contains(x.GetPropertyValue<string>("umbracoExtension")) == false &&
+                            x.ContentType.Alias.ToLowerInvariant() != ContentTypeFolder);
 
-            var images = rootFiles.Union(descendantFiles).OrderByDescending(x => x.CreateDate);
+            var descendantFiles =
+                mediaFiles.SelectMany(x => x.Descendants())
+                    .Where(
+                        x =>
+                            exclusionList.Contains(x.GetPropertyValue<string>("umbracoExtension")) == false &&
+                            x.ContentType.Alias.ToLowerInvariant() != ContentTypeFolder);
 
-            foreach (var pdf in images)
+            var mediaItems = rootFiles.Union(descendantFiles).OrderByDescending(x => x.CreateDate);
+
+            foreach (var mediaItem in mediaItems)
             {
-                var id = pdf.Id;
-                var mediaFile = ApplicationContext.Current.Services.MediaService.GetById(id);
-                if (mediaFile == null) continue;
+                var path = mediaItem.Url;
 
-                var url = HttpUtility.UrlPathEncode(string.Format("{0}{1}", _cdnDomain, mediaFile.GetValue("umbracoFile")));
+                // if there is no path then this is a media item with no attached file
+                if (string.IsNullOrEmpty(path)) continue;
+
+                var url = HttpUtility.UrlPathEncode(string.Format("{0}{1}", _cdnDomain, path));
 
                 nodes.Add(
                     new UmbracoSitemapNode
                     {
                         Url = url,
                         Priority = 1,
-                        LastModified = pdf.UpdateDate
+                        LastModified = mediaItem.UpdateDate
                     }
                 );
             }
@@ -115,6 +88,21 @@ namespace Escc.Umbraco.SiteMap.Services
         private static string GetCdnDomain()
         {
             return ConfigurationManager.AppSettings["cdnDomain"];
+        }
+
+        /// <summary>
+        /// Get a list of extensions to exclude from the site map
+        /// </summary>
+        /// <returns>
+        /// A list of excluded file extensions
+        /// </returns>
+        private static IList<string> MediaFilesExclusionList()
+        {
+            //<add key="sitemapMediaFilesExclusions" value="jpeg, jpg, png, gif, bmp, svg" />
+            var exclusions = ConfigurationManager.AppSettings["sitemapMediaFilesExclusions"];
+            var exList = exclusions.Split(',').Select(s => s.Trim()).ToList();
+
+            return exList;
         }
     }
 }

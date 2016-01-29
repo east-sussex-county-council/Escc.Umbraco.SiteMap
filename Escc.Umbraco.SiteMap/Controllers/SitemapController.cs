@@ -18,7 +18,6 @@ namespace Escc.Umbraco.SiteMap.Controllers
 
         public SitemapController() : this(UmbracoContext.Current)
         {
-            
         }
 
         public SitemapController(UmbracoContext umbracoContext) : base(umbracoContext)
@@ -31,13 +30,12 @@ namespace Escc.Umbraco.SiteMap.Controllers
             return HttpNotFound();
         }
 
-        public ActionResult PdfFiles()
+        public ActionResult MediaFiles()
         {
             try
             {
-                //var pdfNodes = _mediaLibraryService.GetPdfFileNodes();
-                var pdfNodes = _mediaLibraryService.GetPdfFileMediaNodes();
-                var xml = GetSitemapDocument(pdfNodes);
+                var mediaNodes = _mediaLibraryService.GetMediaFileNodes();
+                var xml = GetSitemapDocument(mediaNodes);
                 return Content(xml, "text/xml", Encoding.UTF8);
             }
             catch (Exception ex)
