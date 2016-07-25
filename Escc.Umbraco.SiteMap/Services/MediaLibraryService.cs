@@ -100,9 +100,12 @@ namespace Escc.Umbraco.SiteMap.Services
         {
             //<add key="sitemapMediaFilesExclusions" value="jpeg, jpg, png, gif, bmp, svg" />
             var exclusions = ConfigurationManager.AppSettings["sitemapMediaFilesExclusions"];
-            var exList = exclusions.Split(',').Select(s => s.Trim()).ToList();
+            if (String.IsNullOrEmpty(exclusions))
+            {
+                return new string[0];
+            }
 
-            return exList;
+            return exclusions.Split(',').Select(s => s.Trim()).ToList();
         }
     }
 }
