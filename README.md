@@ -11,7 +11,3 @@ The media URLs are relative, and are appended to the value of a `cdnDomain` app 
 			<add key="cdnDomain" value="https://www.example.org" />
 		</appSettings>
 	</configuration>
-
-## NuGet package
-
-The NuGet package is created using the [NuBuild](https://github.com/bspell1/NuBuild) extension for Visual Studio.
